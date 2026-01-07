@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // No authentication required - all access is allowed
+    // Admin checks are handled client-side via localStorage
+    
+    // Users collection (legacy - not used anymore)
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Events collection
+    match /events/{eventId} {
+      allow read, write: if true;
+    }
+
+    // Questions collection
+    match /questions/{questionId} {
+      allow read, write: if true;
+    }
+
+    // Submissions collection
+    match /submissions/{submissionId} {
+      allow read, write: if true;
+    }
+  }
+}
