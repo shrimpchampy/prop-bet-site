@@ -20,9 +20,13 @@
 }
 
 body {
-  background: var(--background);
+  background: #ffffff !important;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+html {
+  background: #ffffff !important;
 }
 
 /* Hide Next.js development overlay indicators */
@@ -46,4 +50,19 @@ footer {
   visibility: visible !important;
   position: relative !important;
   z-index: 1 !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+}
+
+/* Remove any borders from body and html */
+body, html {
+  border: none !important;
+}
+
+/* Remove borders from main containers */
+div[class*="flex-1"] {
+  border: none !important;
+  border-bottom: none !important;
 }

@@ -29,29 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}
       >
-        <div style={{ flex: '1 0 auto' }}>
-          {children}
-        </div>
-        <footer style={{ 
-          padding: '1rem', 
-          textAlign: 'center', 
-          borderTop: '1px solid #e5e7eb', 
-          backgroundColor: '#f9fafb',
-          marginTop: 'auto',
-          width: '100%',
-          flexShrink: 0
-        }}>
-          <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-            Copyright © 2026 210PS Productions, LLC
-            <br />
-            For entertainment/marketing purposes only.
-          </p>
-        </footer>
+        {children}
       </body>
     </html>
   );

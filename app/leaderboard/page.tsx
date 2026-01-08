@@ -169,7 +169,7 @@ export default function LeaderboardPage() {
   const selectedEvent = events.find(e => e.id === selectedEventId);
 
   return (
-    <div className="flex-1 bg-gray-50">
+    <div className="flex-1 bg-white" style={{ border: 'none', borderBottom: 'none' }}>
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
@@ -429,6 +429,13 @@ export default function LeaderboardPage() {
           </>
         )}
       </main>
+      <footer className="pb-4 px-4 text-center w-full border-0" style={{ border: 'none', marginTop: 'auto', paddingTop: '0' }}>
+        <p className="text-xs text-gray-500">
+          Copyright © 2026 210PS Productions, LLC
+          <br />
+          For entertainment/marketing purposes only.
+        </p>
+      </footer>
     </div>
   );
 }
