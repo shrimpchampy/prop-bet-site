@@ -24,3 +24,26 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Hide Next.js development overlay indicators */
+#__next-build-watcher,
+.nextjs-toast-errors-parent,
+[data-nextjs-dialog],
+[data-nextjs-dialog-overlay],
+nextjs-portal,
+#__next-build-watcher,
+[data-nextjs-toast],
+[data-nextjs-toast-wrapper] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure footer is always visible */
+footer {
+  display: block !important;
+  visibility: visible !important;
+  position: relative !important;
+  z-index: 1 !important;
+}

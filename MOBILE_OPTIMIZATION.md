@@ -96,3 +96,5 @@ Consider adding:
 - Optimized images for mobile
 
 
+
+

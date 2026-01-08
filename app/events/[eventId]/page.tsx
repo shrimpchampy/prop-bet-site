@@ -22,9 +22,22 @@ export default function SubmitPicksPage() {
   const [fullName, setFullName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState<number | null>(null);
 
   useEffect(() => {
     if (!eventId) return;
+
+    // Load last submission time from localStorage for rate limiting
+    if (typeof window !== 'undefined') {
+      const lastSubmission = localStorage.getItem(`lastSubmission_${eventId}`);
+      if (lastSubmission) {
+        const lastTime = parseInt(lastSubmission, 10);
+        // Only use if less than 5 minutes old (rate limit window)
+        if (Date.now() - lastTime < 300000) {
+          setLastSubmissionTime(lastTime);
+        }
+      }
+    }
 
     // Fetch event details
     const fetchEvent = async () => {
@@ -139,24 +152,59 @@ export default function SubmitPicksPage() {
       return;
     }
 
+    // Rate limiting: Prevent submissions faster than 60 seconds apart
+    const now = Date.now();
+    if (lastSubmissionTime && (now - lastSubmissionTime) < 60000) {
+      const secondsLeft = Math.ceil((60000 - (now - lastSubmissionTime)) / 1000);
+      alert(`Please wait ${secondsLeft} second(s) before submitting again. This helps prevent spam.`);
+      return;
+    }
+
     setSubmitting(true);
     try {
+      // Check for existing submissions with same username for this event
+      const existingSubmissionsQuery = query(
+        collection(db, 'submissions'),
+        where('eventId', '==', eventId),
+        where('username', '==', username.trim().toLowerCase())
+      );
+      const existingSnapshot = await getDocs(existingSubmissionsQuery);
+      
+      // Limit submissions per username per event (configurable: 5 max)
+      const MAX_SUBMISSIONS_PER_USER = 5;
+      if (existingSnapshot.size >= MAX_SUBMISSIONS_PER_USER) {
+        alert(`You've already submitted ${existingSnapshot.size} entries for this event. Maximum allowed is ${MAX_SUBMISSIONS_PER_USER} entries per username to prevent spam.`);
+        setSubmitting(false);
+        return;
+      }
+
       const picksArray: UserPick[] = Object.entries(picks).map(([propId, answer]) => ({
         propId,
         answer,
       }));
 
-      // Create submission with required fields
+      // Create submission with required fields and security metadata
       const submissionData: any = {
         eventId,
-        username: username.trim(),
+        username: username.trim().toLowerCase(), // Normalize to lowercase
         firstName: firstName,
         lastName: lastName,
         picks: picksArray,
         submittedAt: serverTimestamp(),
+        // Security metadata
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        timestamp: now, // Client-side timestamp for rate limiting
       };
       
       await addDoc(collection(db, 'submissions'), submissionData);
+
+      // Update last submission time
+      setLastSubmissionTime(now);
+      
+      // Store in localStorage for client-side rate limiting across page refreshes
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`lastSubmission_${eventId}`, now.toString());
+      }
 
       alert('Picks submitted successfully!');
       setHasSubmitted(true);
@@ -172,7 +220,7 @@ export default function SubmitPicksPage() {
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="flex-1 bg-gray-50">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Loading...</div>
@@ -183,7 +231,7 @@ export default function SubmitPicksPage() {
 
   if (event.isLocked && !hasSubmitted) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="flex-1 bg-gray-50">
         <Navbar />
         <main className="container mx-auto px-4 py-8">
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
@@ -205,7 +253,7 @@ export default function SubmitPicksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex-1 bg-gray-50">
       <Navbar />
       
       <main className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 max-w-4xl">
@@ -213,9 +261,11 @@ export default function SubmitPicksPage() {
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-1">
             {event.name?.replace(/Super Bowl 2026/gi, 'Super Bowl LX')}
           </h1>
-          <p className="text-xs sm:text-sm text-gray-600 mb-1">
-            {event.description}
-          </p>
+          {event.description && event.description.replace(/prop bet pool/gi, '').trim() && (
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">
+              {event.description.replace(/prop bet pool/gi, '').trim()}
+            </p>
+          )}
           <p className="text-xs text-gray-500">
             📅 {event.eventDate?.toLocaleDateString()} at {event.eventDate?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>

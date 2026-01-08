@@ -43,6 +43,7 @@ export interface UserSubmission {
   id: string;
   eventId: string;
   username: string; // Required username
+  email?: string; // Email address (for spam prevention)
   firstName: string; // Required first name
   lastName: string; // Required last name
   picks: UserPick[];

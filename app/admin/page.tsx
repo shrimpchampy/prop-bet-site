@@ -68,7 +68,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex-1 bg-gray-50">
       <Navbar />
       
       <main className="container mx-auto px-4 py-4">
@@ -109,7 +109,7 @@ export default function AdminPage() {
                         {event.name?.replace(/Super Bowl 2026/gi, 'Super Bowl LX')}
                       </h3>
                       <p className="text-xs text-gray-600 mb-1">{event.description}</p>
-                      <div className="flex gap-3 text-xs">
+                      <div className="flex gap-3 text-xs flex-wrap">
                         <span className="text-gray-500">
                           📅 {event.eventDate?.toLocaleDateString()}
                         </span>
@@ -118,6 +118,9 @@ export default function AdminPage() {
                         </span>
                         <span className={`font-medium ${event.isLocked ? 'text-red-600' : 'text-blue-600'}`}>
                           {event.isLocked ? '🔒 Locked' : '🔓 Open'}
+                        </span>
+                        <span className="text-gray-400 font-mono text-xs">
+                          ID: {event.id}
                         </span>
                       </div>
                     </div>
