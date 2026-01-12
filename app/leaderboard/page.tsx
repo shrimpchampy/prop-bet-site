@@ -247,7 +247,7 @@ export default function LeaderboardPage() {
       <Navbar />
       
       <main className="container mx-auto px-4 py-4">
-        <div className="mb-4 max-w-7xl mx-auto flex items-center justify-between">
+        <div className="mb-4 max-w-7xl mx-auto flex items-center justify-between" key="header-container">
           <h1 className="text-3xl font-bold text-gray-800">
             George's Famous Annual Super Bowl Prop Bet Sheet
           </h1>
