@@ -47,9 +47,6 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-            <Link href="/leaderboard" className="text-sm sm:text-base hover:underline font-semibold px-2 py-1 sm:px-0 sm:py-0">
-              Leaderboard
-            </Link>
             {isAdmin && (
               <>
                 <Link href="/admin" className="text-sm sm:text-base hover:underline font-semibold px-2 py-1 sm:px-0 sm:py-0">
