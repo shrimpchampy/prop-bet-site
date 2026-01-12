@@ -530,12 +530,13 @@ export default function LeaderboardPage() {
                       })}
                     </tbody>
                   </table>
-                  ) : questionStats.length === 0 ? (
-                    <div className="p-12 text-center">
-                      <p className="text-gray-600">No questions with correct answers set yet.</p>
-                    </div>
-                  ) : (
-                    <table className="w-full" style={{ tableLayout: 'fixed' }}>
+                  ) : activeTab === 'distribution' ? (
+                    questionStats.length === 0 ? (
+                      <div className="p-12 text-center">
+                        <p className="text-gray-600">No questions with correct answers set yet.</p>
+                      </div>
+                    ) : (
+                      <table className="w-full" style={{ tableLayout: 'fixed' }}>
                       <colgroup>
                         <col style={{ width: '64px' }} />
                         <col style={{ width: '25%' }} />
@@ -607,7 +608,8 @@ export default function LeaderboardPage() {
                         })}
                       </tbody>
                     </table>
-                  )}
+                    )
+                  ) : null}
                 </div>
               </div>
               </>
