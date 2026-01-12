@@ -398,12 +398,13 @@ export default function LeaderboardPage() {
                                   {userSubmission?.submittedAt ? (
                                     (() => {
                                       let date: Date;
-                                      if (userSubmission.submittedAt instanceof Date) {
-                                        date = userSubmission.submittedAt;
-                                      } else if (userSubmission.submittedAt?.toDate) {
-                                        date = userSubmission.submittedAt.toDate();
+                                      const submittedAt = userSubmission.submittedAt;
+                                      if (submittedAt instanceof Date) {
+                                        date = submittedAt;
+                                      } else if (submittedAt && typeof submittedAt === 'object' && 'toDate' in submittedAt && typeof (submittedAt as any).toDate === 'function') {
+                                        date = (submittedAt as any).toDate();
                                       } else {
-                                        date = new Date(userSubmission.submittedAt);
+                                        date = new Date(submittedAt as any);
                                       }
                                       return date.toLocaleString('en-US', {
                                         month: 'short',
