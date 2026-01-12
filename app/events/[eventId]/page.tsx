@@ -220,7 +220,7 @@ export default function SubmitPicksPage() {
 
   if (!event) {
     return (
-      <div className="flex-1 bg-white" style={{ border: 'none', borderBottom: 'none' }}>
+      <div className="flex-1" style={{ border: 'none', borderBottom: 'none', background: 'transparent' }}>
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Loading...</div>
@@ -231,7 +231,7 @@ export default function SubmitPicksPage() {
 
   if (event.isLocked && !hasSubmitted) {
     return (
-      <div className="flex-1 bg-white" style={{ border: 'none', borderBottom: 'none' }}>
+      <div className="flex-1" style={{ border: 'none', borderBottom: 'none', background: 'transparent' }}>
         <Navbar />
         <main className="container mx-auto px-4 py-8">
           <div className="bg-white rounded-lg shadow-md p-12 text-center">

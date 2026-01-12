@@ -32,6 +32,18 @@ function isTextAnswerCorrect(correctAnswer: string, userAnswer: string): boolean
   return false;
 }
 
+type TabType = 'leaderboard' | 'distribution';
+
+interface QuestionStats {
+  questionId: string;
+  question: string;
+  correctAnswer: string;
+  totalCorrect: number;
+  totalSubmissions: number;
+  percentage: number;
+  order: number;
+}
+
 export default function LeaderboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
@@ -40,6 +52,8 @@ export default function LeaderboardPage() {
   const [questions, setQuestions] = useState<PropQuestion[]>([]);
   const [submissions, setSubmissions] = useState<UserSubmission[]>([]);
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('leaderboard');
+  const [questionStats, setQuestionStats] = useState<QuestionStats[]>([]);
 
   useEffect(() => {
 
@@ -92,7 +106,8 @@ export default function LeaderboardPage() {
         const submissionsSnapshot = await getDocs(submissionsQuery);
         const submissionsData = submissionsSnapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
+          submittedAt: doc.data().submittedAt?.toDate ? doc.data().submittedAt.toDate() : doc.data().submittedAt
         })) as UserSubmission[];
         setSubmissions(submissionsData);
 
@@ -127,6 +142,8 @@ export default function LeaderboardPage() {
             submissionId: submission.id,
             entryNumber: index + 1,
             username: submission.username,
+            firstName: submission.firstName,
+            lastName: submission.lastName,
             correctAnswers,
             totalQuestions,
             percentage,
@@ -153,6 +170,63 @@ export default function LeaderboardPage() {
         
         console.log('Leaderboard data:', leaderboardData);
         setLeaderboard(leaderboardData);
+
+        // Calculate question statistics
+        const stats: QuestionStats[] = questionsData.map((question, index) => {
+          let correctCount = 0;
+          const totalSubs = submissionsData.length;
+
+          if (question.correctAnswer) {
+            const correctAnswer = question.correctAnswer;
+            submissionsData.forEach(submission => {
+              if (submission.picks && Array.isArray(submission.picks)) {
+                const pick = submission.picks.find(p => p.propId === question.id);
+                if (pick) {
+                  if (question.type === 'text') {
+                    if (isTextAnswerCorrect(correctAnswer, pick.answer)) {
+                      correctCount++;
+                    }
+                  } else if (correctAnswer === pick.answer) {
+                    correctCount++;
+                  }
+                }
+              }
+            });
+          }
+
+          const percentage = totalSubs > 0 ? (correctCount / totalSubs) * 100 : 0;
+
+          // Format correct answer for display
+          let formattedAnswer = question.correctAnswer || 'Not set';
+          if (question.type === 'multiple_choice' && question.options) {
+            const correctOption = question.options.find(opt => opt.id === question.correctAnswer);
+            formattedAnswer = correctOption?.text || question.correctAnswer || 'Not set';
+          } else if (question.type === 'yes_no' && question.yesNoLabels) {
+            formattedAnswer = question.correctAnswer === 'yes' ? question.yesNoLabels.yes : question.yesNoLabels.no;
+          } else if (question.type === 'over_under') {
+            formattedAnswer = question.correctAnswer === 'over' ? `Over ${question.overUnderLine}` : `Under ${question.overUnderLine}`;
+          }
+
+          return {
+            questionId: question.id,
+            question: question.question,
+            correctAnswer: formattedAnswer,
+            totalCorrect: correctCount,
+            totalSubmissions: totalSubs,
+            percentage,
+            order: index + 1, // Use 1-based index from sorted array as question number
+          };
+        });
+
+        // Sort by total correct (descending), then by percentage
+        stats.sort((a, b) => {
+          if (b.totalCorrect !== a.totalCorrect) {
+            return b.totalCorrect - a.totalCorrect;
+          }
+          return b.percentage - a.percentage;
+        });
+
+        setQuestionStats(stats);
       } catch (err) {
         console.error('Error calculating leaderboard:', err);
         alert('Error loading leaderboard. Check console for details.');
@@ -169,17 +243,20 @@ export default function LeaderboardPage() {
   const selectedEvent = events.find(e => e.id === selectedEventId);
 
   return (
-    <div className="flex-1 bg-white" style={{ border: 'none', borderBottom: 'none' }}>
+    <div className="flex-1" style={{ border: 'none', borderBottom: 'none', background: 'transparent' }}>
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Leaderboard 🏆
+      <main className="container mx-auto px-4 py-4">
+        <div className="mb-4 max-w-7xl mx-auto flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-800">
+            George's Famous Annual Super Bowl Prop Bet Sheet
           </h1>
-          <p className="text-gray-600">
-            See how you stack up against your friends
-          </p>
+          <a
+            href="/events"
+            className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-semibold whitespace-nowrap"
+          >
+            + Create Entry
+          </a>
         </div>
 
         {events.length === 0 ? (
@@ -192,24 +269,6 @@ export default function LeaderboardPage() {
           </div>
         ) : (
           <>
-            <div className="mb-6">
-              <label htmlFor="event-select" className="block text-sm font-medium text-gray-700 mb-2">
-                Select Event
-              </label>
-              <select
-                id="event-select"
-                value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
-                className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-900"
-              >
-                {events.map(event => (
-                  <option key={event.id} value={event.id}>
-                    {event.name} - {event.eventDate.toLocaleDateString()}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {loadingLeaderboard ? (
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
                 <p className="text-gray-600">Loading leaderboard...</p>
@@ -219,36 +278,97 @@ export default function LeaderboardPage() {
                 <p className="text-gray-600">No submissions yet for this event.</p>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <>
+                <div className="max-w-7xl mx-auto mb-2 flex justify-end">
+                  <div>
+                    <label htmlFor="event-select" className="block text-xs font-medium text-gray-700 mb-1">
+                      Select Event
+                    </label>
+                    <select
+                      id="event-select"
+                      value={selectedEventId}
+                      onChange={(e) => setSelectedEventId(e.target.value)}
+                      className="px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 bg-white"
+                    >
+                      {events.map(event => (
+                        <option key={event.id} value={event.id}>
+                          {event.name} - {event.eventDate.toLocaleDateString()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-7xl mx-auto">
                 <div 
-                  className="px-4 py-2"
+                  className="px-3 py-1.5"
                   style={{
                     background: 'linear-gradient(to right, #0B162A 0%, #0B162A 75%, #C83803 100%)'
                   }}
                 >
-                  <h2 className="text-xl font-bold text-white">
-                    {selectedEvent?.name}
-                  </h2>
-                  <p className="text-white opacity-90 text-xs">
-                    {leaderboard.length} participant{leaderboard.length !== 1 ? 's' : ''}
-                  </p>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">
+                        {selectedEvent?.name}
+                      </h2>
+                      <p className="text-white opacity-90 text-xs">
+                        {leaderboard.length} participant{leaderboard.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setActiveTab('leaderboard')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          activeTab === 'leaderboard'
+                            ? 'bg-white text-gray-900'
+                            : 'text-white hover:bg-white/20'
+                        }`}
+                      >
+                        Leaderboard
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('distribution')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          activeTab === 'distribution'
+                            ? 'bg-white text-gray-900'
+                            : 'text-white hover:bg-white/20'
+                        }`}
+                      >
+                        Correct Answer Distribution
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  {activeTab === 'leaderboard' ? (
+                    <table className="w-full" style={{ tableLayout: 'fixed' }}>
+                      <colgroup>
+                        <col style={{ width: '64px' }} />
+                        <col style={{ width: '15%' }} />
+                        <col style={{ width: '15%' }} />
+                        <col style={{ width: '15%' }} />
+                        <col style={{ width: '80px' }} />
+                        <col />
+                      </colgroup>
                     <thead className="bg-gray-50 border-b">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Rank
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Submitted
+                        </th>
+                        <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Entry
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Correct
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Percentage
+                        <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Score
                         </th>
                       </tr>
                     </thead>
@@ -265,58 +385,79 @@ export default function LeaderboardPage() {
                               className="hover:bg-gray-50 transition-colors cursor-pointer"
                               onClick={() => setExpandedSubmissionId(isExpanded ? null : entry.submissionId)}
                             >
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xl">{rankEmoji}</span>
-                                  <span className="text-lg font-semibold text-gray-900">
-                                    #{index + 1}
+                              <td className="px-3 py-1 whitespace-nowrap text-right w-16">
+                                <div className="flex items-center justify-end gap-1">
+                                  <span className="text-sm w-5 text-center">{rankEmoji}</span>
+                                  <span className="text-sm font-semibold text-gray-900 w-6 text-right">
+                                    {index + 1}
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-3 py-1 whitespace-nowrap">
+                                <div className="text-xs text-gray-600">
+                                  {userSubmission?.submittedAt ? (
+                                    (() => {
+                                      let date: Date;
+                                      if (userSubmission.submittedAt instanceof Date) {
+                                        date = userSubmission.submittedAt;
+                                      } else if (userSubmission.submittedAt?.toDate) {
+                                        date = userSubmission.submittedAt.toDate();
+                                      } else {
+                                        date = new Date(userSubmission.submittedAt);
+                                      }
+                                      return date.toLocaleString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true
+                                      });
+                                    })()
+                                  ) : 'Unknown'}
+                                </div>
+                              </td>
+                              <td className="px-3 py-1 whitespace-nowrap">
                                 <div className="flex items-center gap-2">
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {entry.username || `Entry #${entry.entryNumber}`}
-                                    </div>
-                                    {entry.username && (
-                                      <div className="text-xs text-gray-500">Entry #{entry.entryNumber}</div>
-                                    )}
+                                  <div className="text-xs font-bold text-gray-900">
+                                    {entry.username || `Entry ${entry.entryNumber}`}
                                   </div>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setExpandedSubmissionId(isExpanded ? null : entry.submissionId);
                                     }}
-                                    className="ml-auto text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                    className="ml-auto text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1"
                                   >
-                                    {isExpanded ? '▼ Hide Answers' : '▶ Show Answers'}
+                                    <span>Picks</span>
+                                    <span>{isExpanded ? '▼' : '▶'}</span>
                                   </button>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  <span className="font-semibold text-lg">{entry.correctAnswers}</span>
-                                  <span className="text-gray-500"> / {entry.totalQuestions}</span>
+                              <td className="px-3 py-1 whitespace-nowrap">
+                                <div className="text-xs text-gray-900">
+                                  {entry.firstName && entry.lastName 
+                                    ? `${entry.firstName} ${entry.lastName}`
+                                    : '-'}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="flex-1 max-w-xs">
-                                    <div className="relative pt-1">
-                                      <div className="flex mb-2 items-center justify-between">
-                                        <div>
-                                          <span className="text-xs font-semibold inline-block text-blue-600">
-                                            {entry.percentage.toFixed(1)}%
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-100">
-                                        <div
-                                          style={{ width: `${entry.percentage}%` }}
-                                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
-                                        />
-                                      </div>
+                              <td className="px-3 py-1 whitespace-nowrap">
+                                <div className="text-xs text-gray-900">
+                                  <span className="font-semibold">{entry.correctAnswers}</span>
+                                  <span className="text-gray-500">/{entry.totalQuestions}</span>
+                                </div>
+                              </td>
+                              <td className="px-3 py-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-semibold text-blue-600 whitespace-nowrap">
+                                    {entry.percentage.toFixed(1)}%
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="overflow-hidden h-1.5 text-xs flex rounded bg-blue-100">
+                                      <div
+                                        style={{ width: `${entry.percentage}%` }}
+                                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -324,23 +465,23 @@ export default function LeaderboardPage() {
                             </tr>
                             {isExpanded && userSubmission && (
                               <tr>
-                                <td colSpan={4} className="px-6 py-4 bg-gray-50">
-                                  <div className="bg-white rounded-lg shadow-lg p-4 border-2 border-blue-500">
-                                    <div className="flex items-center justify-between mb-3">
-                                      <h3 className="font-bold text-lg text-gray-800">
-                                        {entry.username ? `${entry.username} (Entry #${entry.entryNumber})` : `Entry #${entry.entryNumber}`} Answers
+                                <td colSpan={6} className="px-3 py-1.5 bg-gray-50">
+                                  <div className="bg-white rounded-lg shadow-lg p-2 border-2 border-blue-500">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                      <h3 className="font-bold text-sm text-gray-800">
+                                        {entry.username ? `${entry.username}` : `Entry ${entry.entryNumber}`} Answers
                                       </h3>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setExpandedSubmissionId(null);
                                         }}
-                                        className="text-gray-500 hover:text-gray-700 text-sm"
+                                        className="text-gray-500 hover:text-gray-700 text-xs"
                                       >
-                                        ✕ Close
+                                        ✕
                                       </button>
                                     </div>
-                                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                     {questions.map((question, qIndex) => {
                                       const pick = userSubmission.picks?.find(p => p.propId === question.id);
                                       const userAnswer = pick?.answer || 'Not answered';
@@ -364,51 +505,16 @@ export default function LeaderboardPage() {
                                       }
                                       
                                       return (
-                                        <div key={question.id} className="border-b border-gray-200 pb-3 last:border-0">
-                                          <div className="flex items-start gap-3">
-                                            <span className="text-sm font-semibold text-gray-500 min-w-[30px]">
-                                              #{qIndex + 1}
-                                            </span>
-                                            <div className="flex-1">
-                                              <p className="text-sm font-medium text-gray-800 mb-1">
-                                                {question.question}
-                                              </p>
-                                              <div className="flex items-center gap-2">
-                                                <span className={`text-sm px-2 py-1 rounded ${
-                                                  hasCorrectAnswer 
-                                                    ? (isCorrect 
-                                                        ? 'bg-green-100 text-green-800' 
-                                                        : 'bg-red-100 text-red-800')
-                                                    : 'bg-gray-100 text-gray-600'
-                                                }`}>
-                                                  {displayAnswer}
-                                                </span>
-                                                {hasCorrectAnswer && (
-                                                  <span className={`text-xs px-2 py-1 rounded ${
-                                                    isCorrect 
-                                                      ? 'bg-green-500 text-white' 
-                                                      : 'bg-gray-400 text-white'
-                                                  }`}>
-                                                    {isCorrect ? '✓ Correct' : '✗ Wrong'}
-                                                  </span>
-                                                )}
-                                                {hasCorrectAnswer && !isCorrect && question.correctAnswer && (
-                                                  <span className="text-xs text-gray-500">
-                                                    (Correct: {(() => {
-                                                      if (question.type === 'multiple_choice' && question.options) {
-                                                        const correctOption = question.options.find(opt => opt.id === question.correctAnswer);
-                                                        return correctOption?.text || question.correctAnswer;
-                                                      } else if (question.type === 'yes_no' && question.yesNoLabels) {
-                                                        return question.correctAnswer === 'yes' ? question.yesNoLabels.yes : question.yesNoLabels.no;
-                                                      } else if (question.type === 'over_under') {
-                                                        return question.correctAnswer === 'over' ? `Over ${question.overUnderLine}` : `Under ${question.overUnderLine}`;
-                                                      }
-                                                      return question.correctAnswer;
-                                                    })()})
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
+                                        <div key={question.id} className="text-xs">
+                                          <div className="font-semibold text-gray-800 mb-1">
+                                            #{qIndex + 1}: {question.question}
+                                          </div>
+                                          <div className={`px-2 py-1 rounded ${
+                                            hasCorrectAnswer 
+                                              ? (isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')
+                                              : 'bg-gray-100 text-gray-600'
+                                          }`}>
+                                            {displayAnswer}
                                           </div>
                                         </div>
                                       );
@@ -423,8 +529,87 @@ export default function LeaderboardPage() {
                       })}
                     </tbody>
                   </table>
+                  ) : questionStats.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <p className="text-gray-600">No questions with correct answers set yet.</p>
+                    </div>
+                  ) : (
+                    <table className="w-full" style={{ tableLayout: 'fixed' }}>
+                      <colgroup>
+                        <col style={{ width: '64px' }} />
+                        <col style={{ width: '25%' }} />
+                        <col style={{ width: '18%' }} />
+                        <col style={{ width: '100px' }} />
+                        <col />
+                      </colgroup>
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="px-3 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            #
+                          </th>
+                          <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Question
+                          </th>
+                          <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Correct Answer
+                          </th>
+                          <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                            Total Correct
+                          </th>
+                          <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Percentage
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {questionStats.map((stat, index) => {
+                          return (
+                            <tr key={stat.questionId} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-3 py-1 whitespace-nowrap text-right w-16">
+                                <span className="text-sm font-semibold text-gray-900">
+                                  {stat.order || index + 1}
+                                </span>
+                              </td>
+                              <td className="px-3 py-1">
+                                <span className="text-xs font-medium text-gray-900">
+                                  {stat.question}
+                                </span>
+                              </td>
+                              <td className="px-3 py-1">
+                                <span className="text-xs text-gray-900 break-words">
+                                  {stat.correctAnswer}
+                                </span>
+                              </td>
+                              <td className="px-3 py-1 whitespace-nowrap">
+                                <div className="text-xs text-gray-900">
+                                  <span className="font-semibold">{stat.totalCorrect}</span>
+                                  <span className="text-gray-500">/{stat.totalSubmissions}</span>
+                                </div>
+                              </td>
+                              <td className="px-3 py-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-semibold text-blue-600 whitespace-nowrap">
+                                    {stat.percentage.toFixed(1)}%
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="overflow-hidden h-1.5 text-xs flex rounded bg-blue-100">
+                                      <div
+                                        style={{ width: `${stat.percentage}%` }}
+                                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
+              </>
             )}
           </>
         )}

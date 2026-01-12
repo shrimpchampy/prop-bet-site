@@ -210,7 +210,7 @@ export default function HomePage() {
   const selectedEvent = events.find(e => e.id === selectedEventId);
 
   return (
-    <div className="flex-1 bg-white" style={{ border: 'none', borderBottom: 'none' }}>
+    <div className="flex-1" style={{ border: 'none', borderBottom: 'none', background: 'transparent' }}>
       <Navbar />
       
       <main className="container mx-auto px-4 py-4">
@@ -310,9 +310,10 @@ export default function HomePage() {
                                 e.stopPropagation();
                                 setExpandedSubmissionId(isExpanded ? null : entry.submissionId);
                               }}
-                              className="text-blue-600 text-base min-w-[36px] min-h-[36px] flex items-center justify-center flex-shrink-0"
+                              className="text-blue-600 text-base min-w-[36px] min-h-[36px] flex items-center justify-center gap-1 flex-shrink-0"
                             >
-                              {isExpanded ? '▼' : '▶'}
+                              <span className="text-xs">Picks</span>
+                              <span>{isExpanded ? '▼' : '▶'}</span>
                             </button>
                           </div>
                           <div className="flex items-center justify-between gap-2 mb-1">
@@ -459,9 +460,10 @@ export default function HomePage() {
                                       e.stopPropagation();
                                       setExpandedSubmissionId(isExpanded ? null : entry.submissionId);
                                     }}
-                                    className="ml-auto text-blue-600 hover:text-blue-800 text-xs"
+                                    className="ml-auto text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1"
                                   >
-                                    {isExpanded ? '▼' : '▶'}
+                                    <span>Picks</span>
+                                    <span>{isExpanded ? '▼' : '▶'}</span>
                                   </button>
                                 </div>
                               </td>

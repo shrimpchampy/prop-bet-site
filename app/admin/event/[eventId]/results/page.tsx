@@ -103,7 +103,7 @@ export default function MarkResultsPage() {
   }
 
   return (
-    <div className="flex-1 bg-gray-50">
+    <div className="flex-1" style={{ background: 'transparent' }}>
       <Navbar />
       
       <main className="container mx-auto px-4 py-4">

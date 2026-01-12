@@ -43,7 +43,7 @@ export default function EventsPage() {
   }, []);
 
   return (
-    <div className="flex-1 bg-white" style={{ border: 'none', borderBottom: 'none' }}>
+    <div className="flex-1" style={{ border: 'none', borderBottom: 'none', background: 'transparent' }}>
       <Navbar />
       
       <main className="container mx-auto px-4 py-4">
