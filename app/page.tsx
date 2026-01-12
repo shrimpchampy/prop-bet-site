@@ -214,14 +214,10 @@ export default function HomePage() {
       <Navbar />
       
       <main className="container mx-auto px-4 py-4">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-1">
-              George's Famous Annual Super Bowl Prop Bet Sheet
-            </h1>
-            <p className="text-gray-600 text-sm">
-            </p>
-          </div>
+        <div className="mb-4 max-w-7xl mx-auto flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-800">
+            George's Famous Annual Super Bowl Prop Bet Sheet
+          </h1>
           <Link
             href="/events"
             className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-semibold whitespace-nowrap"
