@@ -34,6 +34,7 @@ function isTextAnswerCorrect(correctAnswer: string, userAnswer: string): boolean
 }
 
 type TabType = 'leaderboard' | 'distribution';
+type DistributionSortType = 'totalCorrect' | 'questionNumber';
 
 interface QuestionStats {
   questionId: string;
@@ -55,6 +56,7 @@ export default function HomePage() {
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('leaderboard');
   const [questionStats, setQuestionStats] = useState<QuestionStats[]>([]);
+  const [distributionSort, setDistributionSort] = useState<DistributionSortType>('totalCorrect');
 
   useEffect(() => {
     // Fetch all events (no user required to view)
@@ -236,14 +238,7 @@ export default function HomePage() {
           };
         });
 
-        // Sort by total correct (descending), then by percentage
-        stats.sort((a, b) => {
-          if (b.totalCorrect !== a.totalCorrect) {
-            return b.totalCorrect - a.totalCorrect;
-          }
-          return b.percentage - a.percentage;
-        });
-
+        // Store stats - will be sorted based on user selection
         setQuestionStats(stats);
       } catch (err) {
         console.error('Error calculating leaderboard:', err);
@@ -552,7 +547,31 @@ export default function HomePage() {
                         <p className="text-gray-600">No questions with correct answers set yet.</p>
                       </div>
                     ) : (
-                      <table className="w-full" style={{ tableLayout: 'fixed' }}>
+                      <>
+                        <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-end gap-2">
+                          <span className="text-xs text-gray-600">Sort by:</span>
+                          <button
+                            onClick={() => setDistributionSort('totalCorrect')}
+                            className={`px-2 py-1 text-xs rounded transition-colors ${
+                              distributionSort === 'totalCorrect'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            Total Correct
+                          </button>
+                          <button
+                            onClick={() => setDistributionSort('questionNumber')}
+                            className={`px-2 py-1 text-xs rounded transition-colors ${
+                              distributionSort === 'questionNumber'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            Question #
+                          </button>
+                        </div>
+                        <table className="w-full" style={{ tableLayout: 'fixed' }}>
                       <colgroup>
                         <col style={{ width: '64px' }} />
                         <col style={{ width: '25%' }} />
@@ -580,7 +599,17 @@ export default function HomePage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {questionStats.map((stat, index) => {
+                        {[...questionStats].sort((a, b) => {
+                          if (distributionSort === 'questionNumber') {
+                            return a.order - b.order;
+                          } else {
+                            // Sort by total correct (descending), then by percentage
+                            if (b.totalCorrect !== a.totalCorrect) {
+                              return b.totalCorrect - a.totalCorrect;
+                            }
+                            return b.percentage - a.percentage;
+                          }
+                        }).map((stat, index) => {
                           return (
                             <tr key={stat.questionId} className="hover:bg-gray-50 transition-colors">
                               <td className="px-3 py-1 whitespace-nowrap text-right w-16">
@@ -624,6 +653,7 @@ export default function HomePage() {
                         })}
                       </tbody>
                     </table>
+                      </>
                     )
                   ) : null}
                 </div>
