@@ -777,9 +777,9 @@ export default function HomePage() {
                           >
                             <div className="flex items-center justify-end gap-1">
                               #
-                              {distributionSort === 'questionNumber' && (
-                                <span className="text-blue-600">↓</span>
-                              )}
+                              <span className={`font-bold ${distributionSort === 'questionNumber' ? 'text-blue-600' : 'text-gray-400'}`}>
+                                ↓
+                              </span>
                             </div>
                           </th>
                           <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -794,9 +794,9 @@ export default function HomePage() {
                           >
                             <div className="flex items-center gap-1">
                               Correct
-                              {distributionSort === 'totalCorrect' && (
-                                <span className="text-blue-600">↓</span>
-                              )}
+                              <span className={`font-bold ${distributionSort === 'totalCorrect' ? 'text-blue-600' : 'text-gray-400'}`}>
+                                ↓
+                              </span>
                             </div>
                           </th>
                           <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
