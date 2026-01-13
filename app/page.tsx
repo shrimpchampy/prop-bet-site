@@ -572,7 +572,7 @@ export default function HomePage() {
                             Correct Answer
                           </th>
                           <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                            Total Correct
+                            Correct
                           </th>
                           <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Percentage
