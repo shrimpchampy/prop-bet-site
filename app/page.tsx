@@ -316,11 +316,11 @@ export default function HomePage() {
                     background: 'linear-gradient(to right, #0B162A 0%, #0B162A 75%, #C83803 100%)'
                   }}
                 >
-                  <div className="flex justify-end items-center">
+                  <div className="flex justify-center items-center w-full">
                     <div className="flex gap-2">
                       <button
                         onClick={() => setActiveTab('leaderboard')}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        className={`px-3 py-1.5 rounded-md text-sm font-bold transition-colors ${
                           activeTab === 'leaderboard'
                             ? 'bg-white text-gray-900'
                             : 'text-white hover:bg-white/20'
@@ -330,7 +330,7 @@ export default function HomePage() {
                       </button>
                       <button
                         onClick={() => setActiveTab('distribution')}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        className={`px-3 py-1.5 rounded-md text-sm font-bold transition-colors ${
                           activeTab === 'distribution'
                             ? 'bg-white text-gray-900'
                             : 'text-white hover:bg-white/20'
