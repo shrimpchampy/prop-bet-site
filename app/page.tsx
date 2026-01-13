@@ -6,6 +6,13 @@ import { collection, query, getDocs, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Event, PropQuestion, UserSubmission, LeaderboardEntry } from '@/lib/types';
 import { autoLockEventIfNeeded } from '@/lib/eventLock';
+import { Poppins } from 'next/font/google';
+
+const poppins = Poppins({
+  weight: ['400', '500', '600', '700', '800', '900'],
+  subsets: ['latin'],
+  variable: '--font-poppins',
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -259,7 +266,7 @@ export default function HomePage() {
       
       <main className="container mx-auto px-4 py-4">
         <div className="mb-4 max-w-7xl mx-auto flex items-center justify-between" key="header-container">
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className={`text-3xl font-bold text-gray-800 ${poppins.className}`}>
             George's Famous Annual Super Bowl Prop Bet Sheet
           </h1>
           <a
