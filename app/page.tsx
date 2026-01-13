@@ -690,7 +690,8 @@ export default function HomePage() {
                       </div>
                     ) : (
                       <>
-                        <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-end gap-2">
+                        {/* Mobile Card View - Keep buttons for mobile */}
+                        <div className="block md:hidden px-3 py-2 border-b border-gray-200 flex items-center justify-end gap-2">
                           <span className="text-xs text-gray-600">Sort by:</span>
                           <button
                             onClick={() => setDistributionSort('totalCorrect')}
@@ -770,8 +771,16 @@ export default function HomePage() {
                       </colgroup>
                       <thead className="bg-gray-50 border-b">
                         <tr>
-                          <th className="px-3 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            #
+                          <th 
+                            className="px-3 py-1 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => setDistributionSort('questionNumber')}
+                          >
+                            <div className="flex items-center justify-end gap-1">
+                              #
+                              {distributionSort === 'questionNumber' && (
+                                <span className="text-blue-600">↓</span>
+                              )}
+                            </div>
                           </th>
                           <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Question
@@ -779,8 +788,16 @@ export default function HomePage() {
                           <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Correct Answer
                           </th>
-                          <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                            Correct
+                          <th 
+                            className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => setDistributionSort('totalCorrect')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Correct
+                              {distributionSort === 'totalCorrect' && (
+                                <span className="text-blue-600">↓</span>
+                              )}
+                            </div>
                           </th>
                           <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Percentage
