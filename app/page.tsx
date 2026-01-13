@@ -349,7 +349,7 @@ export default function HomePage() {
                             : 'text-white hover:bg-white/20'
                         }`}
                       >
-                        Correct Answer Distribution
+                        Correct Picks
                       </button>
                     </div>
                   </div>
