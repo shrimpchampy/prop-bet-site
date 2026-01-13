@@ -316,15 +316,7 @@ export default function HomePage() {
                     background: 'linear-gradient(to right, #0B162A 0%, #0B162A 75%, #C83803 100%)'
                   }}
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h2 className="text-lg font-bold text-white">
-                        {selectedEvent?.name}
-                      </h2>
-                      <p className="text-white opacity-90 text-xs">
-                        {leaderboard.length} participant{leaderboard.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
+                  <div className="flex justify-end items-center">
                     <div className="flex gap-2">
                       <button
                         onClick={() => setActiveTab('leaderboard')}
