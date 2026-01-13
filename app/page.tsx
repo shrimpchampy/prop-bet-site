@@ -733,7 +733,7 @@ export default function HomePage() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="text-xs font-medium text-gray-900 mb-1">{stat.question}</div>
-                                    <div className="text-xs text-gray-600">{stat.correctAnswer}</div>
+                                    <div className="text-xs font-bold text-gray-600">{stat.correctAnswer}</div>
                                   </div>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
@@ -812,7 +812,7 @@ export default function HomePage() {
                                 </span>
                               </td>
                               <td className="px-3 py-1">
-                                <span className="text-xs text-gray-900 break-words">
+                                <span className="text-xs font-bold text-gray-900 break-words">
                                   {stat.correctAnswer}
                                 </span>
                               </td>
