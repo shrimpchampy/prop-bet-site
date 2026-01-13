@@ -352,7 +352,148 @@ export default function HomePage() {
 
                 <div className="overflow-x-auto">
                   {activeTab === 'leaderboard' ? (
-                    <table className="w-full" style={{ tableLayout: 'fixed' }}>
+                    <>
+                      {/* Mobile Card View */}
+                      <div className="block md:hidden divide-y divide-gray-200">
+                        {leaderboard.map((entry, index) => {
+                          const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                          const userSubmission = submissions.find(s => s.id === entry.submissionId);
+                          const isExpanded = expandedSubmissionId === entry.submissionId;
+                          
+                          return (
+                            <div key={entry.submissionId} className="p-3">
+                              <div 
+                                className="cursor-pointer"
+                                onClick={() => setExpandedSubmissionId(isExpanded ? null : entry.submissionId)}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <span className="text-lg">{rankEmoji}</span>
+                                    <span className="text-sm font-bold text-gray-900">#{index + 1}</span>
+                                    <span className="text-sm font-bold text-gray-900 truncate">{entry.username || `Entry ${entry.entryNumber}`}</span>
+                                    {entry.firstName && entry.lastName && (
+                                      <span className="text-xs text-gray-600 truncate hidden sm:inline">• {entry.firstName} {entry.lastName}</span>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExpandedSubmissionId(isExpanded ? null : entry.submissionId);
+                                    }}
+                                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 flex-shrink-0"
+                                  >
+                                    <span>Picks</span>
+                                    <span>{isExpanded ? '▼' : '▶'}</span>
+                                  </button>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="text-gray-600">
+                                    {userSubmission?.submittedAt ? (
+                                      (() => {
+                                        let date: Date;
+                                        const submittedAt = userSubmission.submittedAt;
+                                        if (submittedAt instanceof Date) {
+                                          date = submittedAt;
+                                        } else if (submittedAt && typeof submittedAt === 'object' && 'toDate' in submittedAt && typeof (submittedAt as any).toDate === 'function') {
+                                          date = (submittedAt as any).toDate();
+                                        } else {
+                                          date = new Date(submittedAt as any);
+                                        }
+                                        return date.toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric'
+                                        });
+                                      })()
+                                    ) : 'Unknown'}
+                                  </div>
+                                  <div className="text-gray-900">
+                                    <span className="font-semibold">{entry.correctAnswers}</span>
+                                    <span className="text-gray-500">/{entry.totalQuestions}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-blue-600 whitespace-nowrap">
+                                      {entry.percentage.toFixed(1)}%
+                                    </span>
+                                    <div className="w-16">
+                                      <div className="overflow-hidden h-1.5 text-xs flex rounded bg-blue-100">
+                                        <div
+                                          style={{ width: `${entry.percentage}%` }}
+                                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                {entry.firstName && entry.lastName && (
+                                  <div className="text-xs text-gray-600 mt-1 sm:hidden">
+                                    {entry.firstName} {entry.lastName}
+                                  </div>
+                                )}
+                              </div>
+                              {isExpanded && userSubmission && (
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-blue-500">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h3 className="font-bold text-sm text-gray-800">
+                                        {entry.username ? `${entry.username}` : `Entry ${entry.entryNumber}`} Answers
+                                      </h3>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedSubmissionId(null);
+                                        }}
+                                        className="text-gray-500 hover:text-gray-700 text-xs"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                      {questions.map((question, qIndex) => {
+                                        const pick = userSubmission.picks?.find(p => p.propId === question.id);
+                                        const userAnswer = pick?.answer || 'Not answered';
+                                        const isCorrect = question.correctAnswer && (
+                                          question.type === 'text' 
+                                            ? isTextAnswerCorrect(question.correctAnswer, userAnswer)
+                                            : question.correctAnswer === userAnswer
+                                        );
+                                        const hasCorrectAnswer = !!question.correctAnswer;
+                                        
+                                        let displayAnswer = userAnswer;
+                                        if (question.type === 'multiple_choice' && question.options) {
+                                          const selectedOption = question.options.find(opt => opt.id === userAnswer);
+                                          displayAnswer = selectedOption?.text || userAnswer;
+                                        } else if (question.type === 'yes_no' && question.yesNoLabels) {
+                                          displayAnswer = userAnswer === 'yes' ? question.yesNoLabels.yes : question.yesNoLabels.no;
+                                        } else if (question.type === 'over_under') {
+                                          displayAnswer = userAnswer === 'over' ? `Over ${question.overUnderLine}` : `Under ${question.overUnderLine}`;
+                                        }
+                                        
+                                        return (
+                                          <div key={question.id} className="text-xs">
+                                            <div className="font-semibold text-gray-800 mb-1">
+                                              #{qIndex + 1}: {question.question}
+                                            </div>
+                                            <div className={`px-2 py-1 rounded ${
+                                              hasCorrectAnswer 
+                                                ? (isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')
+                                                : 'bg-gray-100 text-gray-600'
+                                            }`}>
+                                              {displayAnswer}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Desktop Table View */}
+                      <table className="w-full hidden md:table" style={{ tableLayout: 'fixed' }}>
                       <colgroup>
                         <col style={{ width: '64px' }} />
                         <col style={{ width: '15%' }} />
@@ -541,6 +682,7 @@ export default function HomePage() {
                       })}
                     </tbody>
                   </table>
+                    </>
                   ) : activeTab === 'distribution' ? (
                     questionStats.length === 0 ? (
                       <div className="p-12 text-center">
@@ -571,7 +713,54 @@ export default function HomePage() {
                             Question #
                           </button>
                         </div>
-                        <table className="w-full" style={{ tableLayout: 'fixed' }}>
+                        {/* Mobile Card View */}
+                        <div className="block md:hidden divide-y divide-gray-200">
+                          {[...questionStats].sort((a, b) => {
+                            if (distributionSort === 'questionNumber') {
+                              return a.order - b.order;
+                            } else {
+                              if (b.totalCorrect !== a.totalCorrect) {
+                                return b.totalCorrect - a.totalCorrect;
+                              }
+                              return b.percentage - a.percentage;
+                            }
+                          }).map((stat) => {
+                            return (
+                              <div key={stat.questionId} className="p-3">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-sm font-semibold text-gray-900">#{stat.order}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium text-gray-900 mb-1">{stat.question}</div>
+                                    <div className="text-xs text-gray-600">{stat.correctAnswer}</div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="text-gray-900">
+                                    <span className="font-semibold">{stat.totalCorrect}</span>
+                                    <span className="text-gray-500">/{stat.totalSubmissions}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-blue-600 whitespace-nowrap">
+                                      {stat.percentage.toFixed(1)}%
+                                    </span>
+                                    <div className="w-20">
+                                      <div className="overflow-hidden h-1.5 text-xs flex rounded bg-blue-100">
+                                        <div
+                                          style={{ width: `${stat.percentage}%` }}
+                                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Desktop Table View */}
+                        <table className="w-full hidden md:table" style={{ tableLayout: 'fixed' }}>
                       <colgroup>
                         <col style={{ width: '64px' }} />
                         <col style={{ width: '25%' }} />
@@ -650,11 +839,10 @@ export default function HomePage() {
                               </td>
                             </tr>
                           );
-                        })}
-                      </tbody>
+                      })}
+                    </tbody>
                     </table>
-                      </>
-                    )
+                    </>
                   ) : null}
                 </div>
               </div>
