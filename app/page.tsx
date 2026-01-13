@@ -842,7 +842,8 @@ export default function HomePage() {
                       })}
                     </tbody>
                     </table>
-                    </>
+                      </>
+                    )
                   ) : null}
                 </div>
               </div>
