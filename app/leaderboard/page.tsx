@@ -8,26 +8,33 @@ import { Event, PropQuestion, UserSubmission, LeaderboardEntry } from '@/lib/typ
 
 export const dynamic = 'force-dynamic';
 
-// Helper function to check if text answers match (flexible matching for text questions)
-function isTextAnswerCorrect(correctAnswer: string, userAnswer: string): boolean {
-  if (!correctAnswer || !userAnswer) return false;
+// Helper function to check if text answers match (flexible matching + accepted aliases)
+function isTextAnswerCorrect(correctAnswer: string, userAnswer: string, acceptedAnswers: string[] = []): boolean {
+  if (!userAnswer) return false;
+  const candidates = [correctAnswer, ...acceptedAnswers].filter(Boolean);
+  if (candidates.length === 0) return false;
+  return candidates.some(candidate => basicTextMatch(candidate, userAnswer));
+}
+
+function basicTextMatch(expected: string, actual: string): boolean {
+  if (!expected || !actual) return false;
   
   // Normalize both answers: lowercase and trim
-  const normalizedCorrect = correctAnswer.toLowerCase().trim();
-  const normalizedUser = userAnswer.toLowerCase().trim();
+  const normalizedExpected = expected.toLowerCase().trim();
+  const normalizedActual = actual.toLowerCase().trim();
   
   // Exact match (case-insensitive)
-  if (normalizedCorrect === normalizedUser) return true;
+  if (normalizedExpected === normalizedActual) return true;
   
-  // Split into words and check if any word from correct answer appears in user answer
-  const correctWords = normalizedCorrect.split(/\s+/).filter(word => word.length > 0);
-  const userWords = normalizedUser.split(/\s+/).filter(word => word.length > 0);
+  // Split into words and check if any word from expected answer appears in actual answer
+  const expectedWords = normalizedExpected.split(/\s+/).filter(word => word.length > 0);
+  const actualWords = normalizedActual.split(/\s+/).filter(word => word.length > 0);
   
-  // Check if all words from correct answer are present in user answer
-  if (correctWords.every(word => normalizedUser.includes(word))) return true;
+  // Check if all words from expected answer are present in actual answer
+  if (expectedWords.every(word => normalizedActual.includes(word))) return true;
   
-  // Check if all words from user answer are present in correct answer
-  if (userWords.every(word => normalizedCorrect.includes(word))) return true;
+  // Check if all words from actual answer are present in expected answer
+  if (actualWords.every(word => normalizedExpected.includes(word))) return true;
   
   return false;
 }
@@ -125,7 +132,7 @@ export default function LeaderboardPage() {
               if (question?.correctAnswer) {
                 // For text questions, use flexible matching; for others, use exact match
                 if (question.type === 'text') {
-                  if (isTextAnswerCorrect(question.correctAnswer, pick.answer)) {
+                  if (isTextAnswerCorrect(question.correctAnswer, pick.answer, question.acceptedAnswers || [])) {
                     correctAnswers++;
                   }
                 } else if (question.correctAnswer === pick.answer) {
@@ -183,7 +190,7 @@ export default function LeaderboardPage() {
                 const pick = submission.picks.find(p => p.propId === question.id);
                 if (pick) {
                   if (question.type === 'text') {
-                    if (isTextAnswerCorrect(correctAnswer, pick.answer)) {
+                    if (isTextAnswerCorrect(correctAnswer, pick.answer, question.acceptedAnswers || [])) {
                       correctCount++;
                     }
                   } else if (correctAnswer === pick.answer) {
@@ -489,7 +496,7 @@ export default function LeaderboardPage() {
                                       // For text questions, use flexible matching; for others, use exact match
                                       const isCorrect = question.correctAnswer && (
                                         question.type === 'text' 
-                                          ? isTextAnswerCorrect(question.correctAnswer, userAnswer)
+                                          ? isTextAnswerCorrect(question.correctAnswer, userAnswer, question.acceptedAnswers || [])
                                           : question.correctAnswer === userAnswer
                                       );
                                       const hasCorrectAnswer = !!question.correctAnswer;
@@ -510,12 +517,19 @@ export default function LeaderboardPage() {
                                           <div className="font-semibold text-gray-800 mb-1">
                                             #{qIndex + 1}: {question.question}
                                           </div>
-                                          <div className={`px-2 py-1 rounded ${
+                                          <div className={`px-2 py-1 rounded group flex items-center gap-2 ${
                                             hasCorrectAnswer 
                                               ? (isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')
                                               : 'bg-gray-100 text-gray-600'
                                           }`}>
-                                            {displayAnswer}
+                                            <span className="min-w-0">{displayAnswer}</span>
+                                            {isCorrect && (
+                                              <img
+                                                src="/gzhyped.gif"
+                                                alt="Correct pick"
+                                                className="pointer-events-none h-6 w-6 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                                              />
+                                            )}
                                           </div>
                                         </div>
                                       );

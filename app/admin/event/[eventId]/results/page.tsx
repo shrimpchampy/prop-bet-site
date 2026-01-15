@@ -18,6 +18,7 @@ export default function MarkResultsPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [questions, setQuestions] = useState<PropQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [acceptedAnswers, setAcceptedAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -64,12 +65,17 @@ export default function MarkResultsPage() {
 
       // Initialize answers with existing correct answers
       const initialAnswers: Record<string, string> = {};
+      const initialAccepted: Record<string, string> = {};
       questionsData.forEach(q => {
         if (q.correctAnswer) {
           initialAnswers[q.id] = q.correctAnswer;
         }
+        if (q.acceptedAnswers && q.acceptedAnswers.length > 0) {
+          initialAccepted[q.id] = q.acceptedAnswers.join(', ');
+        }
       });
       setAnswers(initialAnswers);
+      setAcceptedAnswers(initialAccepted);
     });
 
     return () => unsubscribe();
@@ -79,13 +85,24 @@ export default function MarkResultsPage() {
     setAnswers({ ...answers, [questionId]: answer });
   };
 
+  const handleAcceptedAnswersChange = (questionId: string, value: string) => {
+    setAcceptedAnswers({ ...acceptedAnswers, [questionId]: value });
+  };
+
   const handleSaveResults = async () => {
     setSaving(true);
     try {
       // Update each question with its correct answer
-      const updates = Object.entries(answers).map(([questionId, answer]) => 
-        updateDoc(doc(db, 'questions', questionId), { correctAnswer: answer })
-      );
+      const updates = Object.entries(answers).map(([questionId, answer]) => {
+        const accepted = (acceptedAnswers[questionId] || '')
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
+        return updateDoc(doc(db, 'questions', questionId), { 
+          correctAnswer: answer,
+          acceptedAnswers: accepted,
+        });
+      });
       
       await Promise.all(updates);
       alert('Results saved successfully! Leaderboard will update automatically.');
@@ -227,6 +244,16 @@ export default function MarkResultsPage() {
                           onChange={(e) => handleAnswerChange(q.id, e.target.value)}
                           className="w-full max-w-md px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
                           placeholder="Enter the correct answer"
+                        />
+                        <label className="block text-xs font-medium text-gray-700 mt-2 mb-1">
+                          Accepted Answers (comma-separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={acceptedAnswers[q.id] || ''}
+                          onChange={(e) => handleAcceptedAnswersChange(q.id, e.target.value)}
+                          className="w-full max-w-md px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
+                          placeholder="e.g. Iceman, Caleb (nickname)"
                         />
                       </div>
                     )}

@@ -17,6 +17,7 @@ export interface PropQuestion {
   overUnderLine?: number; // For over/under
   yesNoLabels?: { yes: string; no: string }; // Custom labels for yes/no questions (e.g., "Heads"/"Tails")
   correctAnswer?: string; // Set by admin when marking correct
+  acceptedAnswers?: string[]; // Optional aliases for text answers
   order: number;
   createdAt: Date;
 }
