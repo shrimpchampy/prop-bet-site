@@ -668,19 +668,12 @@ export default function HomePage() {
                                           <div className="font-semibold text-gray-800 mb-1">
                                             #{qIndex + 1}: {question.question}
                                           </div>
-                                          <div className={`px-2 py-1 rounded group flex items-center gap-2 ${
+                                          <div className={`px-2 py-1 rounded ${
                                             hasCorrectAnswer 
                                               ? (isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')
                                               : 'bg-gray-100 text-gray-600'
                                           }`}>
-                                            <span className="min-w-0">{displayAnswer}</span>
-                                            {isCorrect && (
-                                              <img
-                                                src="/gzhyped.gif"
-                                                alt="Correct pick"
-                                                className="pointer-events-none h-16 w-16 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                                              />
-                                            )}
+                                            {displayAnswer}
                                           </div>
                                         </div>
                                       );
