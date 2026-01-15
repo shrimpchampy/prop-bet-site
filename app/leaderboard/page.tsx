@@ -527,7 +527,7 @@ export default function LeaderboardPage() {
                                               <img
                                                 src="/gzhyped.gif"
                                                 alt="Correct pick"
-                                                className="pointer-events-none h-6 w-6 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                                                className="pointer-events-none h-16 w-16 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                                               />
                                             )}
                                           </div>
