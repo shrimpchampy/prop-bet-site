@@ -90,15 +90,23 @@ export default function HomePage() {
         }
       });
       
-      setEvents(eventsData.sort((a, b) => {
+      const sortedEvents = eventsData.sort((a, b) => {
+        const createdA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+        const createdB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
         const dateA = a.eventDate instanceof Date ? a.eventDate.getTime() : 0;
         const dateB = b.eventDate instanceof Date ? b.eventDate.getTime() : 0;
-        return dateB - dateA;
-      }));
+        const sortA = createdA || dateA;
+        const sortB = createdB || dateB;
+        return sortB - sortA;
+      });
+      
+      // Only show the most recent event in the selector
+      const latestEvents = sortedEvents.length > 0 ? [sortedEvents[0]] : [];
+      setEvents(latestEvents);
       
       // Auto-select the most recent event
-      if (eventsData.length > 0) {
-        setSelectedEventId(eventsData[0].id);
+      if (latestEvents.length > 0) {
+        setSelectedEventId(latestEvents[0].id);
       }
     };
 
@@ -502,10 +510,10 @@ export default function HomePage() {
                       <table className="w-full hidden md:table" style={{ tableLayout: 'fixed' }}>
                       <colgroup>
                         <col style={{ width: '64px' }} />
+                        <col style={{ width: '11%' }} />
                         <col style={{ width: '15%' }} />
                         <col style={{ width: '15%' }} />
-                        <col style={{ width: '15%' }} />
-                        <col style={{ width: '80px' }} />
+                        <col style={{ width: '72px' }} />
                         <col />
                       </colgroup>
                     <thead className="bg-gray-50 border-b">
@@ -517,10 +525,10 @@ export default function HomePage() {
                           Submitted
                         </th>
                         <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Entry
+                          Email
                         </th>
                         <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Name
+                          Entry
                         </th>
                         <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Correct
@@ -577,8 +585,13 @@ export default function HomePage() {
                                 </div>
                               </td>
                               <td className="px-3 py-1 whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                  <div className="text-xs font-bold text-gray-900">
+                                <div className="text-xs text-gray-900">
+                                  {userSubmission?.email || '-'}
+                                </div>
+                              </td>
+                              <td className="px-3 py-1 whitespace-nowrap overflow-hidden">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="text-xs font-bold text-gray-900 truncate min-w-0 flex-1 max-w-full">
                                     {entry.username || `Entry ${entry.entryNumber}`}
                                   </div>
                                   <button
@@ -586,18 +599,11 @@ export default function HomePage() {
                                       e.stopPropagation();
                                       setExpandedSubmissionId(isExpanded ? null : entry.submissionId);
                                     }}
-                                    className="ml-auto text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1"
+                                    className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 flex-shrink-0"
                                   >
                                     <span>Picks</span>
                                     <span>{isExpanded ? '▼' : '▶'}</span>
                                   </button>
-                                </div>
-                              </td>
-                              <td className="px-3 py-1 whitespace-nowrap">
-                                <div className="text-xs text-gray-900">
-                                  {entry.firstName && entry.lastName 
-                                    ? `${entry.firstName} ${entry.lastName}`
-                                    : '-'}
                                 </div>
                               </td>
                               <td className="px-3 py-1 whitespace-nowrap">
